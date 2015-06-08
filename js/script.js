@@ -1,7 +1,8 @@
 $(document).ready(function(){
 	
-var s = Snap("#holder"); 
+	var svg = $("#holder");
+	var r = Raphael(svg[0],svg.width(),svg.height());
 
-var r = s.rectText(100,100,100,50,2,2);
+var rect = r.rectText(100,100,100,50,"Texto");
 
 });
