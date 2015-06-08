@@ -1,2 +1,2 @@
-# family-tree
+# Family Tree
 Family Tree Javascript (SVG)
