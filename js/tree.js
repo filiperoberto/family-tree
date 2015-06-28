@@ -69,7 +69,8 @@ function drawTree(element,width,height,json,callback) {
 			} , json.Pessoa);
         shapes = [mainPerson];
 		
-		var casamentos = [];
+		var pais = {};
+		pais[json.Pessoa.id] = mainPerson;
 		
 		for(var i=0;i<json.Casamento.length;i++)
 		{
@@ -82,7 +83,7 @@ function drawTree(element,width,height,json,callback) {
 				
 			connections.push(r.connection(shapes[0][0], newShape, lineColor,lineColor+"|"+lineWidth));
 			shapes.push(newShape);
-			casamentos.push(newShape);
+			pais[json.Casamento[i].id] = newShape;
 		}
 		
 		var lineColor = json.Pessoa.linhagem_de_jesus?colors['jesus']:colors.parents;
@@ -114,6 +115,9 @@ function drawTree(element,width,height,json,callback) {
 			
 			var newShape = buildPessoaSet({x:(i+1)*(width/(json.filhos.length+1)),y: json.filhos.length<=2?height-height/4:(i%2?(height-height/4):(height-height/3)) },filho);
 			var lineColor = filho.linhagem_de_jesus?colors['jesus']:colors['siblings'];
+
+			//TODO - Add connection to mom and dad if exists using 'var pais'
+
 			connections.push(r.connection(shapes[0][0], newShape[0], lineColor,lineColor+"|"+lineWidth));
 			shapes.push(newShape);
 		}

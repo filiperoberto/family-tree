@@ -2,13 +2,7 @@ var json = {"Pessoa":{"id":"315","nome":"Davi","idade_morte":null,"pai":"314","m
 
 function changeDescription(nome,citacoes,descricao,idade_morte,id,sinonimos)
 {
-	var descriptionHolder = $('#person-description');
-	descriptionHolder.find('.nome').text(nome);
-	descriptionHolder.find('.citacoes').text(citacoes).versicular();
-	descriptionHolder.find('.sinonimos').text(sinonimos?sinonimos:'-');
-	descriptionHolder.find('.idade-morte').text(idade_morte?idade_morte:'-');
-	descriptionHolder.find('.texto').html(descricao).acharVersiculos();
-	descriptionHolder.find('.btn').attr('href','/pessoas/edit/'+id);		
+	console.log('Change '+nome);	
 }
 	
 $(document).ready(function(){
