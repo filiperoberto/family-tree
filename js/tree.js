@@ -71,6 +71,7 @@ function drawTree(element,width,height,json,callback) {
 		
 		var pais = {};
 		pais[json.Pessoa.id] = mainPerson;
+		pais.position = {};
 		
 		for(var i=0;i<json.Casamento.length;i++)
 		{
@@ -84,6 +85,7 @@ function drawTree(element,width,height,json,callback) {
 			connections.push(r.connection(shapes[0][0], newShape, lineColor,lineColor+"|"+lineWidth));
 			shapes.push(newShape);
 			pais[json.Casamento[i].id] = newShape;
+			pais.position[json.Casamento[i].id] = json.Casamento.length%2?(i+2)*(width/(json.Casamento.length+2)):(i+1)*(width/(json.Casamento.length+1));
 		}
 		
 		var lineColor = json.Pessoa.linhagem_de_jesus?colors['jesus']:colors.parents;
@@ -109,16 +111,87 @@ function drawTree(element,width,height,json,callback) {
 			connections.push(r.connection(shapes[0][0], parentObject[0], lineColor,lineColor+"|"+lineWidth));
 		}
 
+		var joins = {};
+		var childrenPositions = {};
+		childrenPositions['index'] = {};
+
+		for(var i=0;i<json.filhos.length;i++) {
+
+			var filho = json.filhos[i].Pessoa;
+
+			if(childrenPositions[filho.pai+filho.mae] === undefined) {
+					childrenPositions[filho.pai+filho.mae] = 0;
+			}
+			childrenPositions[filho.pai+filho.mae]++;
+		}
+
+		var newShape;
+		var containsAllParents = false;
+
 		for(var i=0;i<json.filhos.length;i++)
 		{
 			var filho = json.filhos[i].Pessoa;
 			
-			var newShape = buildPessoaSet({x:(i+1)*(width/(json.filhos.length+1)),y: json.filhos.length<=2?height-height/4:(i%2?(height-height/4):(height-height/3)) },filho);
 			var lineColor = filho.linhagem_de_jesus?colors['jesus']:colors['siblings'];
 
-			//TODO - Add connection to mom and dad if exists using 'var pais'
+			if(pais[filho.pai] !== undefined && pais[filho.mae] !== undefined) {
 
-			connections.push(r.connection(shapes[0][0], newShape[0], lineColor,lineColor+"|"+lineWidth));
+				containsAllParents = true;
+
+				if(childrenPositions.index[filho.pai+filho.mae] === undefined) {
+					childrenPositions.index[filho.pai+filho.mae] = 0;
+				}
+
+				var positionX;
+				if(filho.pai === json.Pessoa.id) {
+					positionX = pais.position[filho.mae];
+				} else {
+					positionX = pais.position[filho.pai];
+				}
+
+				newShape = buildPessoaSet({
+					x: childrenPositions.index[filho.pai+filho.mae]<childrenPositions[filho.pai+filho.mae]/2?childrenPositions.index[filho.pai+filho.mae]*(300/childrenPositions[filho.pai+filho.mae]) + positionX:positionX - childrenPositions.index[filho.pai+filho.mae]*(300/childrenPositions[filho.pai+filho.mae]),
+					y: json.filhos.length<=2?height-height/4:(i%2?(height-height/4):(height-height/3)) },filho);
+				childrenPositions.index[filho.pai+filho.mae] ++;
+
+				if(joins[filho.pai+filho.mae] === undefined) {
+					joins[filho.pai+filho.mae] = buildSet({x:positionX,y:height/2,text:'',color:lineColor,lineColor:lineColor,textColor:'rgba(0,0,0,0)',height:10});
+					shapes.push(joins[filho.pai+filho.mae]);
+					
+					connections.push(r.connection(joins[filho.pai+filho.mae][0], pais[filho.pai], lineColor,lineColor+"|"+lineWidth));
+					connections.push(r.connection(joins[filho.pai+filho.mae][0], pais[filho.mae], lineColor,lineColor+"|"+lineWidth));
+				}
+				
+				connections.push(r.connection(joins[filho.pai+filho.mae][0], newShape[0], lineColor,lineColor+"|"+lineWidth));
+			}
+			else if (pais[filho.pai] !== undefined || pais[filho.mae] !== undefined) {
+
+				var parentShape = pais[filho.pai] || pais[filho.mae];
+				if(childrenPositions.index[filho.pai+filho.mae] === undefined) {
+					childrenPositions.index[filho.pai+filho.mae] = 0;
+				}
+
+				var heightplus = height+150;
+
+				newShape = buildPessoaSet({
+					x: childrenPositions.index[filho.pai+filho.mae]<childrenPositions[filho.pai+filho.mae]/2?childrenPositions.index[filho.pai+filho.mae]*(500/childrenPositions[filho.pai+filho.mae]) + (width/2):(width/2) - childrenPositions.index[filho.pai+filho.mae]*(500/childrenPositions[filho.pai+filho.mae]),
+					y: json.filhos.length<=2?heightplus-heightplus/4:(i%2?(heightplus-heightplus/4):(heightplus-heightplus/3)) },filho);
+				childrenPositions.index[filho.pai+filho.mae] ++;
+
+				if(containsAllParents) {
+					if(joins[json.Pessoa.id] === undefined) {
+						joins[json.Pessoa.id] = buildSet({x:width/2,y:height-height/4,text:'',color:lineColor,lineColor:lineColor,textColor:'rgba(0,0,0,0)',height:10});
+						shapes.push(joins[json.Pessoa.id]);
+
+						connections.push(r.connection(parentShape, joins[json.Pessoa.id][0], lineColor,lineColor+"|"+lineWidth));
+					}
+
+					connections.push(r.connection(joins[json.Pessoa.id][0], newShape[0], lineColor,lineColor+"|"+lineWidth));
+				}
+				else {
+					connections.push(r.connection(parentShape[0], newShape[0], lineColor,lineColor+"|"+lineWidth));
+				}			
+			};
 			shapes.push(newShape);
 		}
 		
