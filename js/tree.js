@@ -65,7 +65,7 @@ function drawTree(element,width,height,json,callback) {
 		mainPerson = buildPessoaSet(
 			{ 
 				x:width/2,
-				y:height/2
+				y:height/3
 			} , json.Pessoa);
         shapes = [mainPerson];
 		
@@ -77,7 +77,7 @@ function drawTree(element,width,height,json,callback) {
 			var newShape = buildPessoaSet(
 				{ 
 					x:json.Casamento.length%2?(i+2)*(width/(json.Casamento.length+2)):(i+1)*(width/(json.Casamento.length+1)),
-					y:(height/2)
+					y:(height/3)
 				},json.Casamento[i]);
 				
 			connections.push(r.connection(shapes[0][0], newShape, lineColor,lineColor+"|"+lineWidth));
