@@ -118,24 +118,29 @@ function drawTree(element,width,height,json,callback) {
 		var childrendata = {
 			withbothparents	: {
 				width : 0,
-				size : 0
+				size : 0,
+				offset : 0
 			},
 			withoutbothparents : {
 				width : 0,
-				size : 0
+				size : 0,
+				offset : 0
 			},
 			positionY : {
 				0 : {
 					width : 0,
-					size: 0
+					size: 0,
+					offset : 0
 				},
 				1 : {
 					width : 0,
-					size :0
+					size :0,
+					offset : 0
 				},
 				3 : {
 					width : 0,
-					size :0
+					size :0,
+					offset : 0
 				}
 			}
 		};
@@ -173,6 +178,10 @@ function drawTree(element,width,height,json,callback) {
 			childrendata.positionY[even===undefined?3:even].size ++;
 		}
 
+		childrendata.positionY[0].offset = (width - childrendata.positionY[0].width) / (childrendata.positionY[0].size -1 ) - 10;
+		childrendata.positionY[1].offset = (width - childrendata.positionY[1].width) / (childrendata.positionY[1].size -1 ) - 10;
+		childrendata.positionY[3].offset = (width - childrendata.positionY[3].width) / (childrendata.positionY[3].size -1 ) - 10;
+
 		var nextPosition = {};
 		var even = 0;
 		for(var key in children) {
@@ -190,20 +199,20 @@ function drawTree(element,width,height,json,callback) {
 					}
 
 					if(nextPosition[even] === undefined) {
-						nextPosition[even] = (width - childrendata.positionY[even].width) / 2;
+						nextPosition[even] = childrendata.positionY[even].offset;
 					}					
 					
 					child['shape'].translate(nextPosition[even],height - (even===0 ? height/3 : height/4));
-					nextPosition[even] = nextPosition[even] + child['width'] + 5;
+					nextPosition[even] += child['width'] + childrendata.positionY[even].offset;
 				}
 				else if(child.pai !== null || child.mae !== null) {
 
 					if(nextPosition[3] === undefined) {
-						nextPosition[3] = (width - childrendata.withoutbothparents.width)/2;
+						nextPosition[3] = childrendata.positionY[even].offset;
 					}
 
 					child['shape'].translate(nextPosition[3],height - height/6);
-					nextPosition[3] = nextPosition[3] + child['width'] + 5;
+					nextPosition[3] += child['width'] + childrendata.positionY[even].offset;
 				}
 			}
 
