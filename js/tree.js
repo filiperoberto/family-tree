@@ -72,6 +72,7 @@ function drawTree(element,width,height,json,callback) {
 		var pais = {};
 		pais[json.Pessoa.id] = mainPerson;
 		pais.position = {};
+		pais.order = {};
 		
 		for(var i=0;i<json.Casamento.length;i++)
 		{
@@ -86,6 +87,7 @@ function drawTree(element,width,height,json,callback) {
 			shapes.push(newShape);
 			pais[json.Casamento[i].id] = newShape;
 			pais.position[json.Casamento[i].id] = json.Casamento.length%2?(i+2)*(width/(json.Casamento.length+2)):(i+1)*(width/(json.Casamento.length+1));
+			pais.order[json.Casamento[i].id] = i%2;
 		}
 		
 		var lineColor = json.Pessoa.linhagem_de_jesus?colors['jesus']:colors.parents;
@@ -111,7 +113,103 @@ function drawTree(element,width,height,json,callback) {
 			connections.push(r.connection(shapes[0][0], parentObject[0], lineColor,lineColor+"|"+lineWidth));
 		}
 
-		var joins = {};
+		var children = [];
+
+		var childrendata = {
+			withbothparents	: {
+				width : 0,
+				size : 0
+			},
+			withoutbothparents : {
+				width : 0,
+				size : 0
+			},
+			positionY : {
+				0 : {
+					width : 0,
+					size: 0
+				},
+				1 : {
+					width : 0,
+					size :0
+				},
+				3 : {
+					width : 0,
+					size :0
+				}
+			}
+		};
+
+		for(var i=0;i<json.filhos.length;i++) {
+
+			var filho = json.filhos[i].Pessoa;
+
+			var newShape = buildPessoaSet({x: 0,y: 0},filho);
+			if(children[filho.pai+filho.mae] === undefined)
+				children[filho.pai+filho.mae] = {};
+
+			children[filho.pai+filho.mae][filho.id] = {};
+			children[filho.pai+filho.mae][filho.id].pai = filho.pai;
+			children[filho.pai+filho.mae][filho.id].mae = filho.mae;
+			children[filho.pai+filho.mae][filho.id]['shape'] = newShape;
+			children[filho.pai+filho.mae][filho.id]['width'] = newShape[0].node.width.animVal.value;
+
+			if(filho.pai !== null && filho.mae !== null) {
+				childrendata.withbothparents.width += newShape[0].node.width.animVal.value;
+				childrendata.withbothparents.size ++;
+			}
+			else {
+				childrendata.withoutbothparents.width += newShape[0].node.width.animVal.value;
+				childrendata.withoutbothparents.size ++;
+			}
+
+			if(filho.pai === json.Pessoa.id) {
+				even = pais.order[filho.mae];
+			} else {
+				even = pais.order[filho.pai];
+			}
+
+			childrendata.positionY[even===undefined?3:even].width += newShape[0].node.width.animVal.value;
+			childrendata.positionY[even===undefined?3:even].size ++;
+		}
+
+		var nextPosition = {};
+		var even = 0;
+		for(var key in children) {
+
+			for(var id in children[key]) {
+
+				var child = children[key][id];
+
+				if(child.pai !== null && child.mae !== null) {
+
+					if(child.pai === json.Pessoa.id) {
+						even = pais.order[child.mae];
+					} else {
+						even = pais.order[child.pai];
+					}
+
+					if(nextPosition[even] === undefined) {
+						nextPosition[even] = (width - childrendata.positionY[even].width) / 2;
+					}					
+					
+					child['shape'].translate(nextPosition[even],height - (even===0 ? height/3 : height/4));
+					nextPosition[even] = nextPosition[even] + child['width'] + 5;
+				}
+				else if(child.pai !== null || child.mae !== null) {
+
+					if(nextPosition[3] === undefined) {
+						nextPosition[3] = (width - childrendata.withoutbothparents.width)/2;
+					}
+
+					child['shape'].translate(nextPosition[3],height - height/6);
+					nextPosition[3] = nextPosition[3] + child['width'] + 5;
+				}
+			}
+
+		}
+
+		/*var joins = {};
 		var childrenPositions = {};
 		childrenPositions['index'] = {};
 		var par = true;
@@ -191,9 +289,7 @@ function drawTree(element,width,height,json,callback) {
 				var heightplus = height+150;
 
 				newShape = buildPessoaSet({
-					//x: childrenPositions.index[filho.pai+filho.mae]<childrenPositions[filho.pai+filho.mae]/2?childrenPositions.index[filho.pai+filho.mae]*(500/childrenPositions[filho.pai+filho.mae]) + (width/2):(width/2) - childrenPositions.index[filho.pai+filho.mae]*(500/childrenPositions[filho.pai+filho.mae]),
 					x: position[filho.pai+filho.mae],
-					//y: json.filhos.length<=2?heightplus-heightplus/4:(i%2?(heightplus-heightplus/4):(heightplus-heightplus/3)) },filho);
 					y:heightplus-heightplus/3},filho);
 
 				childrenPositions.index[filho.pai+filho.mae] ++;
@@ -215,7 +311,7 @@ function drawTree(element,width,height,json,callback) {
 				}			
 			};
 			shapes.push(newShape);
-		}
+		}*/
 		
 		for(var i=shapes.length-1;i>=0;i--)
 		{
