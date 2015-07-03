@@ -114,6 +114,7 @@ function drawTree(element,width,height,json,callback) {
 		var joins = {};
 		var childrenPositions = {};
 		childrenPositions['index'] = {};
+		var par = true;
 
 		for(var i=0;i<json.filhos.length;i++) {
 
@@ -127,6 +128,7 @@ function drawTree(element,width,height,json,callback) {
 
 		var newShape;
 		var containsAllParents = false;
+		var position = {};
 
 		for(var i=0;i<json.filhos.length;i++)
 		{
@@ -149,10 +151,19 @@ function drawTree(element,width,height,json,callback) {
 					positionX = pais.position[filho.pai];
 				}
 
+				if(position[filho.pai+filho.mae] === undefined) {
+					var totalChildren = childrenPositions[filho.pai+filho.mae];
+					position[filho.pai+filho.mae] = positionX-100;
+					position[filho.pai+filho.mae] /= 2;
+				}
+
 				newShape = buildPessoaSet({
-					x: childrenPositions.index[filho.pai+filho.mae]<childrenPositions[filho.pai+filho.mae]/2?childrenPositions.index[filho.pai+filho.mae]*(300/childrenPositions[filho.pai+filho.mae]) + positionX:positionX - childrenPositions.index[filho.pai+filho.mae]*(300/childrenPositions[filho.pai+filho.mae]),
+					//x: childrenPositions.index[filho.pai+filho.mae]<childrenPositions[filho.pai+filho.mae]/2?childrenPositions.index[filho.pai+filho.mae]*(300/childrenPositions[filho.pai+filho.mae]) + positionX:positionX - childrenPositions.index[filho.pai+filho.mae]*(300/childrenPositions[filho.pai+filho.mae]),
+					x: position[filho.pai+filho.mae]+positionX,
 					y: json.filhos.length<=2?height-height/4:(i%2?(height-height/4):(height-height/3)) },filho);
 				childrenPositions.index[filho.pai+filho.mae] ++;
+
+				position[filho.pai+filho.mae] += newShape[0].node.width.animVal.value + 5;
 
 				if(joins[filho.pai+filho.mae] === undefined) {
 					joins[filho.pai+filho.mae] = buildSet({x:positionX,y:height/2,text:'',color:lineColor,lineColor:lineColor,textColor:'rgba(0,0,0,0)',height:10});
@@ -166,6 +177,12 @@ function drawTree(element,width,height,json,callback) {
 			}
 			else if (pais[filho.pai] !== undefined || pais[filho.mae] !== undefined) {
 
+				if(position[filho.pai+filho.mae] === undefined) {
+					var totalChildren = childrenPositions[filho.pai+filho.mae];
+					position[filho.pai+filho.mae] = width - (totalChildren*100);
+					position[filho.pai+filho.mae] /= 2;
+				}
+
 				var parentShape = pais[filho.pai] || pais[filho.mae];
 				if(childrenPositions.index[filho.pai+filho.mae] === undefined) {
 					childrenPositions.index[filho.pai+filho.mae] = 0;
@@ -174,9 +191,14 @@ function drawTree(element,width,height,json,callback) {
 				var heightplus = height+150;
 
 				newShape = buildPessoaSet({
-					x: childrenPositions.index[filho.pai+filho.mae]<childrenPositions[filho.pai+filho.mae]/2?childrenPositions.index[filho.pai+filho.mae]*(500/childrenPositions[filho.pai+filho.mae]) + (width/2):(width/2) - childrenPositions.index[filho.pai+filho.mae]*(500/childrenPositions[filho.pai+filho.mae]),
-					y: json.filhos.length<=2?heightplus-heightplus/4:(i%2?(heightplus-heightplus/4):(heightplus-heightplus/3)) },filho);
+					//x: childrenPositions.index[filho.pai+filho.mae]<childrenPositions[filho.pai+filho.mae]/2?childrenPositions.index[filho.pai+filho.mae]*(500/childrenPositions[filho.pai+filho.mae]) + (width/2):(width/2) - childrenPositions.index[filho.pai+filho.mae]*(500/childrenPositions[filho.pai+filho.mae]),
+					x: position[filho.pai+filho.mae],
+					//y: json.filhos.length<=2?heightplus-heightplus/4:(i%2?(heightplus-heightplus/4):(heightplus-heightplus/3)) },filho);
+					y:heightplus-heightplus/3},filho);
+
 				childrenPositions.index[filho.pai+filho.mae] ++;
+
+				position[filho.pai+filho.mae] += newShape[0].node.width.animVal.value + 5;
 
 				if(containsAllParents) {
 					if(joins[json.Pessoa.id] === undefined) {
