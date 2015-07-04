@@ -71,6 +71,8 @@ function drawTree(element,width,height,json,callback) {
 		
 		var pais = {};
 		pais[json.Pessoa.id] = mainPerson;
+		pais.linhagem_de_jesus = {}; 
+		pais.linhagem_de_jesus[json.Pessoa.id] = json.Pessoa.linhagem_de_jesus;
 		pais.position = {};
 		pais.order = {};
 		
@@ -88,6 +90,7 @@ function drawTree(element,width,height,json,callback) {
 			pais[json.Casamento[i].id] = newShape;
 			pais.position[json.Casamento[i].id] = json.Casamento.length%2?(i+2)*(width/(json.Casamento.length+2)):(i+1)*(width/(json.Casamento.length+1));
 			pais.order[json.Casamento[i].id] = i%2;
+			pais.linhagem_de_jesus[json.Casamento[i].id] =  json.Casamento[i].linhagem_de_jesus;
 		}
 		
 		var lineColor = json.Pessoa.linhagem_de_jesus?colors['jesus']:colors.parents;
@@ -160,6 +163,7 @@ function drawTree(element,width,height,json,callback) {
 			children[filho.pai+filho.mae][filho.id].mae = filho.mae;
 			children[filho.pai+filho.mae][filho.id]['shape'] = newShape;
 			children[filho.pai+filho.mae][filho.id]['width'] = newShape[0].node.width.animVal.value;
+			children[filho.pai+filho.mae][filho.id].linhagem_de_jesus = filho.linhagem_de_jesus;
 
 			if(filho.pai !== null && filho.mae !== null) {
 				childrendata.withbothparents.width += newShape[0].node.width.animVal.value;
@@ -201,6 +205,7 @@ function drawTree(element,width,height,json,callback) {
 				if(pais[child.pai] !== undefined && pais[child.mae] !== undefined) {
 
 					var positionX;
+					containsAllParents = true;
 
 					if(child.pai === json.Pessoa.id) {
 						even = pais.order[child.mae];
@@ -218,11 +223,14 @@ function drawTree(element,width,height,json,callback) {
 					nextPosition[even] += child['width'] + childrendata.positionY[even].offset;
 
 					if(joins[child.pai+child.mae] === undefined) {
-						joins[child.pai+child.mae] = buildSet({x:positionX,y:height/2,text:'',color:lineColor,lineColor:lineColor,textColor:'rgba(0,0,0,0)',height:10});
+
+						var lineC = (pais.linhagem_de_jesus[child.pai]&&pais.linhagem_de_jesus[child.mae])?colors['jesus']:colors['siblings'];
+
+						joins[child.pai+child.mae] = buildSet({x:positionX,y:height/2,text:'',color:lineC,lineC:lineC,lineC:'rgba(0,0,0,0)',height:10});
 						shapes.push(joins[child.pai+child.mae]);
 					
-						connections.push(r.connection(joins[child.pai+child.mae][0], pais[child.pai], lineColor,lineColor+"|"+lineWidth));
-						connections.push(r.connection(joins[child.pai+child.mae][0], pais[child.mae], lineColor,lineColor+"|"+lineWidth));
+						connections.push(r.connection(joins[child.pai+child.mae][0], pais[child.pai], lineC,lineC+"|"+lineWidth));
+						connections.push(r.connection(joins[child.pai+child.mae][0], pais[child.mae], lineC,lineC+"|"+lineWidth));
 					}
 
 					connections.push(r.connection(joins[child.pai+child.mae][0], child['shape'][0], lineColor,lineColor+"|"+lineWidth));
