@@ -216,11 +216,19 @@ function drawTree(element,width,height,json,callback) {
 					}
 
 					if(nextPosition[even] === undefined) {
-						nextPosition[even] = childrendata.positionY[even].offset;
-					}					
+						nextPosition[even] = 0;
+					}
+
+					if(( nextPosition[even] + 5 ) > positionX) {
+						nextPosition[even] += 5;
+					}
+					else {
+						nextPosition[even] = positionX;
+					}
 					
-					child['shape'].translate(nextPosition[even],height - (even===0 ? height/3 : height/4));
-					nextPosition[even] += child['width'] + childrendata.positionY[even].offset;
+					child['shape'].translate(nextPosition[even],(even===0 ? (height/12)*7 :(height/12)*8.5));
+					nextPosition[even] += child['width'];
+
 
 					if(joins[child.pai+child.mae] === undefined) {
 
@@ -243,12 +251,12 @@ function drawTree(element,width,height,json,callback) {
 						nextPosition[3] = childrendata.positionY[3].offset;
 					}
 
-					child['shape'].translate(nextPosition[3],height - height/6);
+					child['shape'].translate(nextPosition[3],(height/12)*10.5);
 					nextPosition[3] += child['width'] + childrendata.positionY[3].offset;
 
 					if(containsAllParents) {
 						if(joins[json.Pessoa.id] === undefined) {
-							joins[json.Pessoa.id] = buildSet({x:width/2,y:height-height/4,text:'',color:lineColor,lineColor:lineColor,textColor:'rgba(0,0,0,0)',height:10});
+							joins[json.Pessoa.id] = buildSet({x:width/2,y:(height/12)*10,text:'',color:lineColor,lineColor:lineColor,textColor:'rgba(0,0,0,0)',height:10});
 							shapes.push(joins[json.Pessoa.id]);
 
 							connections.push(r.connection(parentShape[0], joins[json.Pessoa.id][0], lineColor,lineColor+"|"+lineWidth));
