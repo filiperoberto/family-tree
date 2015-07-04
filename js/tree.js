@@ -150,6 +150,8 @@ function drawTree(element,width,height,json,callback) {
 			var filho = json.filhos[i].Pessoa;
 
 			var newShape = buildPessoaSet({x: 0,y: 0},filho);
+			shapes.push(newShape);
+
 			if(children[filho.pai+filho.mae] === undefined)
 				children[filho.pai+filho.mae] = {};
 
@@ -178,24 +180,34 @@ function drawTree(element,width,height,json,callback) {
 			childrendata.positionY[even===undefined?3:even].size ++;
 		}
 
-		childrendata.positionY[0].offset = (width - childrendata.positionY[0].width) / (childrendata.positionY[0].size -1 ) - 10;
-		childrendata.positionY[1].offset = (width - childrendata.positionY[1].width) / (childrendata.positionY[1].size -1 ) - 10;
-		childrendata.positionY[3].offset = (width - childrendata.positionY[3].width) / (childrendata.positionY[3].size -1 ) - 10;
+		var margen = 5;
+
+		childrendata.positionY[0].offset = (width - (margen*2) - childrendata.positionY[0].width) / (childrendata.positionY[0].size + 1 );
+		childrendata.positionY[1].offset = (width - (margen*2) - childrendata.positionY[1].width) / (childrendata.positionY[1].size + 1 );
+		childrendata.positionY[3].offset = (width - (margen*2) - childrendata.positionY[3].width) / (childrendata.positionY[3].size + 1 );
 
 		var nextPosition = {};
 		var even = 0;
+		var joins = {};
+		var containsAllParents = false;
+
 		for(var key in children) {
 
 			for(var id in children[key]) {
 
 				var child = children[key][id];
+				var lineColor = child.linhagem_de_jesus?colors['jesus']:colors['siblings'];
 
-				if(child.pai !== null && child.mae !== null) {
+				if(pais[child.pai] !== undefined && pais[child.mae] !== undefined) {
+
+					var positionX;
 
 					if(child.pai === json.Pessoa.id) {
 						even = pais.order[child.mae];
+						positionX = pais.position[child.mae];
 					} else {
 						even = pais.order[child.pai];
+						positionX = pais.position[child.pai];
 					}
 
 					if(nextPosition[even] === undefined) {
@@ -204,123 +216,45 @@ function drawTree(element,width,height,json,callback) {
 					
 					child['shape'].translate(nextPosition[even],height - (even===0 ? height/3 : height/4));
 					nextPosition[even] += child['width'] + childrendata.positionY[even].offset;
+
+					if(joins[child.pai+child.mae] === undefined) {
+						joins[child.pai+child.mae] = buildSet({x:positionX,y:height/2,text:'',color:lineColor,lineColor:lineColor,textColor:'rgba(0,0,0,0)',height:10});
+						shapes.push(joins[child.pai+child.mae]);
+					
+						connections.push(r.connection(joins[child.pai+child.mae][0], pais[child.pai], lineColor,lineColor+"|"+lineWidth));
+						connections.push(r.connection(joins[child.pai+child.mae][0], pais[child.mae], lineColor,lineColor+"|"+lineWidth));
+					}
+
+					connections.push(r.connection(joins[child.pai+child.mae][0], child['shape'][0], lineColor,lineColor+"|"+lineWidth));
 				}
-				else if(child.pai !== null || child.mae !== null) {
+				else if(pais[child.pai] !== undefined || pais[child.mae] !== undefined) {
+
+					var parentShape = pais[child.pai] || pais[child.mae];
 
 					if(nextPosition[3] === undefined) {
-						nextPosition[3] = childrendata.positionY[even].offset;
+						nextPosition[3] = childrendata.positionY[3].offset;
 					}
 
 					child['shape'].translate(nextPosition[3],height - height/6);
-					nextPosition[3] += child['width'] + childrendata.positionY[even].offset;
-				}
-			}
+					nextPosition[3] += child['width'] + childrendata.positionY[3].offset;
 
-		}
+					if(containsAllParents) {
+						if(joins[json.Pessoa.id] === undefined) {
+							joins[json.Pessoa.id] = buildSet({x:width/2,y:height-height/4,text:'',color:lineColor,lineColor:lineColor,textColor:'rgba(0,0,0,0)',height:10});
+							shapes.push(joins[json.Pessoa.id]);
 
-		/*var joins = {};
-		var childrenPositions = {};
-		childrenPositions['index'] = {};
-		var par = true;
-
-		for(var i=0;i<json.filhos.length;i++) {
-
-			var filho = json.filhos[i].Pessoa;
-
-			if(childrenPositions[filho.pai+filho.mae] === undefined) {
-					childrenPositions[filho.pai+filho.mae] = 0;
-			}
-			childrenPositions[filho.pai+filho.mae]++;
-		}
-
-		var newShape;
-		var containsAllParents = false;
-		var position = {};
-
-		for(var i=0;i<json.filhos.length;i++)
-		{
-			var filho = json.filhos[i].Pessoa;
-			
-			var lineColor = filho.linhagem_de_jesus?colors['jesus']:colors['siblings'];
-
-			if(pais[filho.pai] !== undefined && pais[filho.mae] !== undefined) {
-
-				containsAllParents = true;
-
-				if(childrenPositions.index[filho.pai+filho.mae] === undefined) {
-					childrenPositions.index[filho.pai+filho.mae] = 0;
-				}
-
-				var positionX;
-				if(filho.pai === json.Pessoa.id) {
-					positionX = pais.position[filho.mae];
-				} else {
-					positionX = pais.position[filho.pai];
-				}
-
-				if(position[filho.pai+filho.mae] === undefined) {
-					var totalChildren = childrenPositions[filho.pai+filho.mae];
-					position[filho.pai+filho.mae] = positionX-100;
-					position[filho.pai+filho.mae] /= 2;
-				}
-
-				newShape = buildPessoaSet({
-					//x: childrenPositions.index[filho.pai+filho.mae]<childrenPositions[filho.pai+filho.mae]/2?childrenPositions.index[filho.pai+filho.mae]*(300/childrenPositions[filho.pai+filho.mae]) + positionX:positionX - childrenPositions.index[filho.pai+filho.mae]*(300/childrenPositions[filho.pai+filho.mae]),
-					x: position[filho.pai+filho.mae]+positionX,
-					y: json.filhos.length<=2?height-height/4:(i%2?(height-height/4):(height-height/3)) },filho);
-				childrenPositions.index[filho.pai+filho.mae] ++;
-
-				position[filho.pai+filho.mae] += newShape[0].node.width.animVal.value + 5;
-
-				if(joins[filho.pai+filho.mae] === undefined) {
-					joins[filho.pai+filho.mae] = buildSet({x:positionX,y:height/2,text:'',color:lineColor,lineColor:lineColor,textColor:'rgba(0,0,0,0)',height:10});
-					shapes.push(joins[filho.pai+filho.mae]);
-					
-					connections.push(r.connection(joins[filho.pai+filho.mae][0], pais[filho.pai], lineColor,lineColor+"|"+lineWidth));
-					connections.push(r.connection(joins[filho.pai+filho.mae][0], pais[filho.mae], lineColor,lineColor+"|"+lineWidth));
-				}
-				
-				connections.push(r.connection(joins[filho.pai+filho.mae][0], newShape[0], lineColor,lineColor+"|"+lineWidth));
-			}
-			else if (pais[filho.pai] !== undefined || pais[filho.mae] !== undefined) {
-
-				if(position[filho.pai+filho.mae] === undefined) {
-					var totalChildren = childrenPositions[filho.pai+filho.mae];
-					position[filho.pai+filho.mae] = width - (totalChildren*100);
-					position[filho.pai+filho.mae] /= 2;
-				}
-
-				var parentShape = pais[filho.pai] || pais[filho.mae];
-				if(childrenPositions.index[filho.pai+filho.mae] === undefined) {
-					childrenPositions.index[filho.pai+filho.mae] = 0;
-				}
-
-				var heightplus = height+150;
-
-				newShape = buildPessoaSet({
-					x: position[filho.pai+filho.mae],
-					y:heightplus-heightplus/3},filho);
-
-				childrenPositions.index[filho.pai+filho.mae] ++;
-
-				position[filho.pai+filho.mae] += newShape[0].node.width.animVal.value + 5;
-
-				if(containsAllParents) {
-					if(joins[json.Pessoa.id] === undefined) {
-						joins[json.Pessoa.id] = buildSet({x:width/2,y:height-height/4,text:'',color:lineColor,lineColor:lineColor,textColor:'rgba(0,0,0,0)',height:10});
-						shapes.push(joins[json.Pessoa.id]);
-
-						connections.push(r.connection(parentShape, joins[json.Pessoa.id][0], lineColor,lineColor+"|"+lineWidth));
+							connections.push(r.connection(parentShape[0], joins[json.Pessoa.id][0], lineColor,lineColor+"|"+lineWidth));
+						}
+						connections.push(r.connection(joins[json.Pessoa.id][0], child['shape'][0], lineColor,lineColor+"|"+lineWidth));
 					}
-
-					connections.push(r.connection(joins[json.Pessoa.id][0], newShape[0], lineColor,lineColor+"|"+lineWidth));
+					else {
+						connections.push(r.connection(parentShape[0], child['shape'][0], lineColor,lineColor+"|"+lineWidth));
+					}
+						
 				}
-				else {
-					connections.push(r.connection(parentShape[0], newShape[0], lineColor,lineColor+"|"+lineWidth));
-				}			
-			};
-			shapes.push(newShape);
-		}*/
+			}
+
+		}
 		
 		for(var i=shapes.length-1;i>=0;i--)
 		{
